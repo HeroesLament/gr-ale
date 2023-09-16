@@ -1,7 +1,6 @@
 id: ale_encode_ff
 label: Encode ff
-module: ALE
-category: Coding
+category: '[ALE]/Coding'
 
 parameters:
 -   id: freq

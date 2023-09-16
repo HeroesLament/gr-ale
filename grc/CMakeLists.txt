@@ -7,5 +7,7 @@
 #
 
 install(FILES
-    ale_decode_ff.block.yml DESTINATION share/gnuradio/grc/blocks
+    ale_decode_ff.block.yml 
+    ale_encode_ff.block.yml
+    DESTINATION share/gnuradio/grc/blocks
 )
