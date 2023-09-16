@@ -21,7 +21,6 @@
 from gnuradio import gr
 from gnuradio import gr_unittest
 from gnuradio import blocks
-import ale_swig as ale
 
 class qa_decode_ff (gr_unittest.TestCase):
 
