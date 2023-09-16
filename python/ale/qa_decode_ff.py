@@ -18,8 +18,8 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 # 
-
-from gnuradio import gr, gr_unittest
+from gnuradio import gr
+from gnuradio import gr_unittest
 from gnuradio import blocks
 import ale_swig as ale
 
