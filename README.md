@@ -29,7 +29,7 @@ Installation from source
 ------------------------
 
 <pre>
-$ git clone https://github.com/gat3way/gr-ale.git gr-ale.git
+$ git clone https://github.com/HeroesLament/gr-ale.git gr-ale.git
 $ cd gr-ale.git
 $ mkdir build
 $ cd build
