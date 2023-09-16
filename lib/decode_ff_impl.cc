@@ -680,243 +680,210 @@ namespace gr {
 
 
 
-	void decode_ff_impl::do_modem(float *sample, int length)
-	{
-	    int i,j,n,max_offset=0; // Removed UNUSED k
-	    double new_sample;
-	    double old_sample;
-	    double temp_real;
-	    double temp_imag;
-	    double max_magnitude=0;
-	    char s1[4],s2[4];
-	    unsigned short ssample[65535];
-	    int bestber=26;
-	    int ito2,itws2,ifrom2,itis2,irep2,idata2;
-	    char to2[4]={0,0,0,0},tws2[4]={0,0,0,0},from2[4]={0,0,0,0},tis2[4]={0,0,0,0},rep2[4]={0,0,0,0},data2[4]={0,0,0,0};
-	    int temppos=0;
+void decode_ff_impl::do_modem(float *sample, int length) {
+    int i, j, n, max_offset = 0;
+    double new_sample, old_sample, temp_real, temp_imag, max_magnitude = 0;
+    char s1[4], s2[4];
+    unsigned short ssample[65535];
+    int bestber = 26;
+    int ito2, itws2, ifrom2, itis2, irep2, idata2;
+    char to2[4] = {0}, tws2[4] = {0}, from2[4] = {0}, tis2[4] = {0}, rep2[4] = {0}, data2[4] = {0};
+    int temppos = 0;
 
+    if (recording) {
+        wavsamples += length;
+        for (i = 0; i < length; i++) {
+            ssample[i] = static_cast<unsigned short>(sample[i] / 0.00003051757);
+        }
+        fwrite(ssample, 1, length, wavfile);
+        if (wavsamples >= wavsec * 8000) {
+            stop_wav();
+        }
+    }
 
-	    if (recording)
-	    {
-		wavsamples+=length;
-		for(i=0; i<length; i++) ssample[i] = (int)(sample[i]/=0.00003051757);
-		fwrite(ssample,1,length,wavfile);
-		if (wavsamples>=wavsec*8000)
-		{
-		    stop_wav();
-		}
-	    }
+    for (i = 0; i < length; i++) {
+        new_sample = sample[i];
+        old_sample = fft_history[fft_history_offset];
+        fft_history[fft_history_offset] = new_sample;
 
-	    for(i=0; i<length; i++)
-	    {
-	/*
-		if(sample[i]&0x8000)
-		{
-		  new_sample = -(((~sample[i])&0x7FFF)*0.00003051757);
-		}
-		else
-		{
-		  new_sample = sample[i]*0.00003051757;
-		}
-	*/
-		new_sample = sample[i];
+        for (n = 0; n < FFT_SIZE / 2; n++) {
+            temp_real = fft_out[n].real - old_sample + new_sample;
+            temp_imag = fft_out[n].imag;
+            fft_out[n].real = (temp_real * fft_cs_twiddle[n]) - (temp_imag * fft_ss_twiddle[n]);
+            fft_out[n].imag = (temp_real * fft_ss_twiddle[n]) + (temp_imag * fft_cs_twiddle[n]);
+            fft_mag[n] = sqrt((fft_out[n].real * fft_out[n].real) + (fft_out[n].imag * fft_out[n].imag)) * 5;
+        }
 
-		old_sample = fft_history[fft_history_offset];
-		fft_history[fft_history_offset] = new_sample;
+        max_magnitude = 0;
+        for (n = 1; n <= 27; n++) {
+            if (fft_mag[n] > max_magnitude) {
+                max_magnitude = fft_mag[n];
+                max_offset = n;
+            }
+        }
 
-		for(n=0; n<FFT_SIZE/2; n++)
-		{
-		    temp_real       = fft_out[n].real-old_sample+new_sample;
-		    temp_imag       = fft_out[n].imag;
-		    fft_out[n].real = (temp_real*fft_cs_twiddle[n]) - (temp_imag*fft_ss_twiddle[n]);
-		    fft_out[n].imag = (temp_real*fft_ss_twiddle[n]) + (temp_imag*fft_cs_twiddle[n]);
-		    fft_mag[n]      = sqrt((fft_out[n].real*fft_out[n].real)+(fft_out[n].imag*fft_out[n].imag))*5;
-		}
+        for (n = 0; n < NR; n++) {
+            mag_sum[n][sample_count] += max_magnitude;
+        }
 
-		max_magnitude = 0;
-		for( n = 1; n <= 27; n++)
-		{
-		    if (( fft_mag[n] > max_magnitude ))
-		    {
-			max_magnitude = fft_mag[n];
-			max_offset    = n;
-		    }
-		}
+        for (j = 0; j < NR; j++) {
+            if (word_sync[j] == NOT_WORD_SYNC) {
+                max_magnitude = 0;
+                for (n = 0; n < FFT_SIZE; n++) {
+                    if (mag_sum[j][n] > max_magnitude) {
+                        max_magnitude = mag_sum[j][n];
+                        last_sync_position[j] = n;
+                    }
+                }
+            }
+        }
 
+        for (n = 0; n < NR; n++) {
+            if (sample_count == last_sync_position[n]) {
+                last_symbol[n] = g_symbol_lookup[n][max_offset];
+            }
+        }
 
-		for (n=0;n<NR;n++)
-		{
-		    mag_sum[n][sample_count] += max_magnitude;
-		    //mag_history[n][sample_count[n]][mag_history_offset[n]] = max_magnitude;
-		}
+        ito = ifrom = itis = irep = idata = itws = 0;
+        bestber = 26;
+        ito2 = itws2 = ifrom2 = itis2 = irep2 = idata2 = 0;
+ito2 = itws2 = ifrom2 = itis2 = irep2 = idata2 = 0;
 
+if (sample_count == 0) {
+    for (n = 0; n < NR; n++) {
+        modem_new_symbol(last_symbol[n], n);
+        if ((ber[n] < bestber) && ((bestpos == 0) || (bestpos == n))) {
+            ito2 = ito;
+            itws2 = itws;
+            ifrom2 = ifrom;
+            itis2 = itis;
+            irep2 = irep;
+            idata2 = idata;
+            
+            memcpy(to2, to, 3);
+            memcpy(tws2, tws, 3);
+            memcpy(from2, from, 3);
+            memcpy(tis2, tis, 3);
+            memcpy(rep2, rep, 3);
+            memcpy(data2, data, 3);
+            
+            bestber = ber[inew];
+            temppos = n;
+        }
+    }
+}
 
-		for (j=0;j<NR;j++) if(word_sync[j] == NOT_WORD_SYNC)
-		{
-		    max_magnitude = 0;
-		    for( n=0; n < FFT_SIZE; n++)
-		    {
-			if(mag_sum[j][n] > max_magnitude)
-			{
-			    max_magnitude = mag_sum[j][n];
-			    last_sync_position[j] = n;
-			}
-		    }
-		}
+if (temppos != 0) {
+    bestpos = temppos;
+}
+inew = bestpos;
 
+if (ito2) {
+    if ((state != 0) && (state != 1)) {
+        log(current, current2, state, lastber);
+    }
+    strcpy(current, to2);
+    state = 1;
+    state_count = 0;
+    lastber = bestber;
+}
 
-		for (n=0;n<NR;n++) if (sample_count==last_sync_position[n])
-		{
-		      last_symbol[n] = g_symbol_lookup[n][max_offset]; 
-		}
+if (itws2) {
+    if ((state != 0) && (state != 2)) {
+        log(current, current2, state, lastber);
+    }
+    strcpy(current, tws2);
+    state = 2;
+    state_count = 0;
+    lastber = bestber;
+}
 
-
-		ito=ifrom=itis=irep=idata=itws=0;
-
-
-
-		bestber=26;
-		ito2=itws2=ifrom2=itis2=irep2=idata2=0;
-		if(sample_count == 0 ) for (n=0;n<NR;n++) 
-		{
-		    modem_new_symbol(last_symbol[n], n);
-
-		    if ((ber[n]<bestber)&&((bestpos==0)||(bestpos==n)))
-		    {
-			ito2=ito;itws2=itws;ifrom2=ifrom;itis2=itis;irep2=irep;idata2=idata;
-			memcpy(to2,to,3);memcpy(tws2,tws,3);memcpy(from2,from,3);memcpy(tis2,tis,3);memcpy(rep2,rep,3);memcpy(data2,data,3);
-			bestber = ber[inew];
-			temppos=n;
-		    }
-		}
-		if (temppos!=0) bestpos = temppos;
-		inew=bestpos;
-
-		if (ito2) 
-		{
-		    if ((state!=0) && (state!=1)) log(current,current2,state,lastber);
-		    strcpy(current,to2);
-		    //printf("To: %s\n",to);
-		    state = 1;
-		    state_count = 0;
-		    lastber = bestber;
-		}
-
-		if (itws2) 
-		{
-		    if ((state!=0) && (state!=2)) log(current,current2,state,lastber);
-		    strcpy(current,tws2);
-		    //printf("TWS: %s\n",tws);
-		    state = 2;
-		    state_count = 0;
-		    lastber = bestber;
-		}
-
-if (itis2) 
-{
-    if ((state != 0) && (state != 3) && (state != 5) && (state != 1)) log(current, current2, state, lastber);
-
-    if (state == 1)
-    {
+if (itis2) {
+    if ((state != 0) && (state != 3) && (state != 5) && (state != 1)) {
+        log(current, current2, state, lastber);
+    }
+    if (state == 1) {
         memset(s1, 0, 4);
         memset(s2, 0, 4);
-
-        // Copy the first three characters from current to s1
         for (int i = 0; i < 3; ++i) {
             s1[i] = current[i];
-        }
-        s1[3] = '\0';  // Ensure null-termination
-
-        // Copy the first three characters from current2 to s2
-        for (int i = 0; i < 3; ++i) {
             s2[i] = current2[i];
         }
+        s1[3] = '\0';  // Ensure null-termination
         s2[3] = '\0';  // Ensure null-termination
 
         strcpy(current2, current);
         state = 5;
 
-        if ((stage == 0) || (stage > 3)) stage = 0;
-
-        if (stage > 0)
-        {
-            if ((strncmp(tis2, s2, 3) == 0) && (strncmp(current, s1, 3) == 0))
-            {
-                stage++;
-            }
-            else stage = 1;
+        if ((stage == 0) || (stage > 3)) {
+            stage = 0;
         }
-        else stage = 1;
-
+        if (stage > 0) {
+            if ((strncmp(tis2, s2, 3) == 0) && (strncmp(current, s1, 3) == 0)) {
+                stage++;
+            } else {
+                stage = 1;
+            }
+        } else {
+            stage = 1;
+        }
         state_count = 0;
-    }
-    else
-    {
+    } else {
         state = 3;
         state_count = 0;
     }
-
     strcpy(current, tis2);
     lastber = bestber;
 }
 
-		if (ifrom2) 
-		{
-		    if ((state!=0) && (state!=4)) log(current,current2,state,lastber);
-		    strcpy(current,from2);
-		    //printf("From: %s\n",from);
-		    state = 4;
-		    state_count = 0;
-		    lastber = bestber;
-		}
+if (ifrom2) {
+    if ((state != 0) && (state != 4)) {
+        log(current, current2, state, lastber);
+    }
+    strcpy(current, from2);
+    state = 4;
+    state_count = 0;
+    lastber = bestber;
+}
 
-		if (idata2) 
-		{
-		    //printf("Data: %s\n",data);
-		    if ((state < 6)&&(state>0))
-		    {
-			strcat(current,data2);
-		    }
-		    state_count = 0;
-		    lastber = bestber;
-		}
+if (idata2) {
+    if ((state < 6) && (state > 0)) {
+        strcat(current, data2);
+    }
+    state_count = 0;
+    lastber = bestber;
+}
 
-		if (irep2) 
-		{
-		    //printf("Rep: %s\n",rep);
-		    if ((state < 6)&&(state>0))
-		    {
-			strcat(current,rep2);
-		    }
-		    state_count = 0;
-		    lastber = bestber;
-		}
-		state_count++;
+if (irep2) {
+    if ((state < 6) && (state > 0)) {
+        strcat(current, rep2);
+    }
+    state_count = 0;
+    lastber = bestber;
+}
 
-		if ((state_count == 16000)&&(state))
-		{
-		  log(current,current2,state,lastber);
-		  state = 0;
-		  state_count = 0;
-		}
+        state_count++;
+        if ((state_count == 16000) && state) {
+            log(current, current2, state, lastber);
+            state = 0;
+            state_count = 0;
+        }
 
-		fft_history_offset = (fft_history_offset+1)%FFT_SIZE;
-		sample_count = (sample_count+1)%MOD_64; 
+        fft_history_offset = (fft_history_offset + 1) % FFT_SIZE;
+        sample_count = (sample_count + 1) % MOD_64;
 
-		if(sample_count == 0)
-		{
-		    mag_history_offset = (mag_history_offset+1)%SYMBOLS_PER_WORD;
-		    if (mag_history_offset==0)
-		    for (n=0;n<NR;n++) 
-		    {
-			for (j=0;j<FFT_SIZE;j++)
-			{
-			    mag_sum[n][j]=0;
-			}
-		    }
-		}
-	    }
-	}
+        if (sample_count == 0) {
+            mag_history_offset = (mag_history_offset + 1) % SYMBOLS_PER_WORD;
+            if (mag_history_offset == 0) {
+                for (n = 0; n < NR; n++) {
+                    for (j = 0; j < FFT_SIZE; j++) {
+                        mag_sum[n][j] = 0;
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 
