@@ -50,7 +50,7 @@ class top_block(gr.top_block):
                     freqs.append(int(line_s))
                     names.append(line[len(line_s):].strip(" ").strip("\n"))
                 except Exception:
-                    print "???",line_s
+                    print("???",line_s)
                 line = fl.readline()
 
             med = median(freqs)
@@ -60,7 +60,7 @@ class top_block(gr.top_block):
             for el in freqs:
                 if abs(el-self.offset)<1000000:
                     self.cfreq.append(el - self.offset)
-                    print "Frequency:", el,"["+names[i]+"]" 
+                    print("Frequency:", el,"["+names[i]+"]")
                 i+=1
 
         else:
