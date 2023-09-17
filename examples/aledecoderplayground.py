@@ -125,7 +125,7 @@ class aledecoderplayground(gr.top_block, Qt.QWidget):
             None # parent
         )
 
-        self.qtgui_histogram_sink_x_0.set_update_time(0.10)
+        self.qtgui_histogram_sink_x_0.set_update_time(0.001)
         self.qtgui_histogram_sink_x_0.enable_autoscale(True)
         self.qtgui_histogram_sink_x_0.enable_accumulate(False)
         self.qtgui_histogram_sink_x_0.enable_grid(False)

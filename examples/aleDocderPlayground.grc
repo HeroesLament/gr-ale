@@ -72,7 +72,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 256.0]
+    coordinate: [1072, 320.0]
     rotation: 0
     state: true
 - name: audio_sink_0
@@ -89,7 +89,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 544.0]
+    coordinate: [1072, 408.0]
     rotation: 0
     state: true
 - name: blocks_float_to_complex_0
@@ -208,7 +208,7 @@ blocks:
     style8: '1'
     style9: '1'
     type: float
-    update_time: '0.10'
+    update_time: '0.001'
     width1: '1'
     width10: '1'
     width2: '1'
@@ -225,7 +225,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 384.0]
+    coordinate: [1072, 472.0]
     rotation: 0
     state: true
 - name: qtgui_waterfall_sink_x_0
