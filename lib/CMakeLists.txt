@@ -24,10 +24,11 @@ endif(NOT ale_sources)
 
 add_library(gnuradio-ale SHARED ${ale_sources})
 target_link_libraries(gnuradio-ale gnuradio::gnuradio-runtime)
-target_include_directories(gnuradio-ale
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    PUBLIC $<INSTALL_INTERFACE:include>
-  )
+include(FindPkgConfig)
+pkg_search_module(CPPUNIT REQUIRED cppunit)
+target_link_libraries(gnuradio-ale ${CPPUNIT_LIBRARIES})
+target_include_directories(gnuradio-ale PUBLIC ${CPPUNIT_INCLUDE_DIRS})
+
 set_target_properties(gnuradio-ale PROPERTIES DEFINE_SYMBOL "gnuradio_ale_EXPORTS")
 
 if(APPLE)
