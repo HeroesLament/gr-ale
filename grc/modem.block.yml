@@ -1,0 +1,49 @@
+id: bidirectional_ale_modem
+label: Bidirectional ALE Modem
+category: '[ALE]/Modems'
+
+parameters:
+-   id: freq
+    label: Frequency
+    dtype: int
+    default: '0'
+-   id: mode
+    label: Mode
+    dtype: string
+    options: [ 'IQ', 'Audio' ]
+    default: 'IQ'
+-   id: rs232_port
+    label: RS-232 CAT Port
+    dtype: string
+    default: '/dev/ttyS0'
+
+inputs:
+-   id: msg_in
+    label: Message In
+    type: message
+-   domain: stream
+    dtype: complex
+    label: IQ Input
+-   domain: stream
+    dtype: float
+    label: Audio Input
+
+outputs:
+-   id: msg_out
+    label: Message Out
+    type: message
+-   domain: stream
+    dtype: complex
+    label: IQ Output
+-   domain: stream
+    dtype: float
+    label: Audio Output
+
+templates:
+    imports: import custom_modem
+    make: custom_modem.Modem(${freq}, mode=${mode}, rs232_port=${rs232_port})
+
+documentation: |
+    ALE Modem Object that decodes the MIL-STD-188-141A protocol (ALE-2G)
+
+file_format: 1

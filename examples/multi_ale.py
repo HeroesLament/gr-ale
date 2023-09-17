@@ -2,7 +2,6 @@
 ##################################################
 # Gnuradio Python Flow Graph
 # Title: Top Block
-# Generated: Tue Dec  8 14:12:15 2015
 ##################################################
 
 from gnuradio import blocks

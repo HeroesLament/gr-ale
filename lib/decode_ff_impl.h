@@ -21,7 +21,7 @@
 #ifndef INCLUDED_ALE_DECODE_FF_IMPL_H
 #define INCLUDED_ALE_DECODE_FF_IMPL_H
 
-#include <ale/decode_ff.h>
+#include <gnuradio/ale/decode_ff.h>
 
 #define NR                          17
 #define FFT_SIZE                    64

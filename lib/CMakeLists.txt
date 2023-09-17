@@ -14,6 +14,7 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND ale_sources
     decode_ff_impl.cc
     qa_ale.cc
+    modem.cpp
 )
 
 set(ale_sources "${ale_sources}" PARENT_SCOPE)

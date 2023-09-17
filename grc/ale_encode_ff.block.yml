@@ -1,5 +1,5 @@
-id: ale_decode_ff
-label: Decode ff
+id: ale_encode_ff
+label: Encode ff
 category: '[ALE]/Coding'
 
 parameters:
@@ -15,12 +15,12 @@ parameters:
     dtype: int
     default: '0'
 
-inputs:
+outputs:
 -   domain: stream
     dtype: float
 
 templates:
-    imports: import gnuradio.ale
-    make: gnuradio.ale.decode_ff.make(${freq},${wdir},${wsec})
+    imports: import ale
+    make: ale.encode_ff(${freq},${wdir},${wsec})
 
 file_format: 1
