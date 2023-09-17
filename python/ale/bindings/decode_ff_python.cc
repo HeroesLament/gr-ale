@@ -25,7 +25,7 @@
 
 namespace py = pybind11;
 
-#include <python/ale/bindings/decode_ff_python.h>
+#include "decode_ff_python.h"
 
 // pydoc.h is automatically generated in the build directory
 #include <decode_ff_pydoc.h>
