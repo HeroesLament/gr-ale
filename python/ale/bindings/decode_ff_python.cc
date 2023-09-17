@@ -26,19 +26,23 @@
 namespace py = pybind11;
 
 #include "decode_ff_python.h"
+#include <gnuradio/ale/decode_ff.h>
 
 // pydoc.h is automatically generated in the build directory
 #include <decode_ff_pydoc.h>
 
 void bind_decode_ff(py::module &m) {
 
-  using decode_ff = gr::ale::decode_ff;
+    using decode_ff = gr::ale::decode_ff;
 
-  py::class_<decode_ff, gr::block, gr::basic_block, std::shared_ptr<decode_ff>>(
-      m, "decode_ff", D(decode_ff))
+    py::class_<decode_ff, gr::block, gr::basic_block, std::shared_ptr<decode_ff>>(
+        m, "decode_ff", D(decode_ff))
 
-      .def(py::init(&decode_ff::make), py::arg("freq"), py::arg("*wdir"),
-           py::arg("wsec"), D(decode_ff, make))
+        // use a lambda to call the make function when Python constructor is called
+        .def(py::init([](int freq, char *wdir, int wsec) {
+            return decode_ff::make(freq, wdir, wsec).get();
+        }), py::arg("freq"), py::arg("wdir"), py::arg("wsec"), D(decode_ff, make))
 
-      ;
+        // any other methods or properties you want to bind
+        ;
 }
