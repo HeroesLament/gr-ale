@@ -19,9 +19,15 @@
 /* BINDTOOL_HEADER_FILE_HASH(7c7daf24d324314a6d1d90dc26428f8e) */
 /***********************************************************************************/
 
+
+#include <gnuradio/block.h>
+#include <gnuradio/basic_block.h>
+#include <gnuradio/sync_block.h>
 #include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <iostream>
+
 
 namespace py = pybind11;
 
@@ -32,17 +38,8 @@ namespace py = pybind11;
 #include <decode_ff_pydoc.h>
 
 void bind_decode_ff(py::module &m) {
-
-    using decode_ff = gr::ale::decode_ff;
-
-    py::class_<decode_ff, gr::block, gr::basic_block, std::shared_ptr<decode_ff>>(
-        m, "decode_ff", D(decode_ff))
-
-        // use a lambda to call the make function when Python constructor is called
-        .def(py::init([](int freq, char *wdir, int wsec) {
-            return decode_ff::make(freq, wdir, wsec).get();
-        }), py::arg("freq"), py::arg("wdir"), py::arg("wsec"), D(decode_ff, make))
-
-        // any other methods or properties you want to bind
-        ;
+    py::class_<gr::ale::decode_ff, gr::block, std::shared_ptr<gr::ale::decode_ff>>(m, "decode_ff")
+        .def_static("make", &gr::ale::decode_ff::make,
+            py::arg("freq"), py::arg("wdir"), py::arg("wsec"));
 }
+

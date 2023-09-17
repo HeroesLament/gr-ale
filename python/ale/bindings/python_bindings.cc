@@ -8,6 +8,7 @@
  */
 
 #include <pybind11/pybind11.h>
+#include "decode_ff_python.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -42,7 +43,8 @@ PYBIND11_MODULE(ale_python, m)
 
     // Allow access to base block methods
     py::module::import("gnuradio.gr");
-
+    m.doc() = "Python bindings for ALE";
+    bind_decode_ff(m);
     /**************************************/
     // The following comment block is used for
     // gr_modtool to insert binding function calls

@@ -23,6 +23,6 @@ inputs:
 
 templates:
     imports: import gnuradio.ale
-    make: gnuradio.ale.decode_ff(${freq},${wdir},${wsec})
+    make: gnuradio.ale.decode_ff.make(${freq},${wdir},${wsec})
 
 file_format: 1
