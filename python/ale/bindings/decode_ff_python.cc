@@ -25,7 +25,8 @@
 
 namespace py = pybind11;
 
-#include <gnuradio/ale/decode_ff.h>
+#include <python/ale/bindings/decode_ff_python.h>
+
 // pydoc.h is automatically generated in the build directory
 #include <decode_ff_pydoc.h>
 

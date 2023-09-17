@@ -29,6 +29,7 @@ include(GrPybind)
 ########################################################################
 
 list(APPEND ale_python_files
+    decode_ff_python.cc
     python_bindings.cc)
 
 GR_PYBIND_MAKE_OOT(ale

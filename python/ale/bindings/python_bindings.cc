@@ -41,7 +41,7 @@ PYBIND11_MODULE(ale_python, m)
     init_numpy();
 
     // Allow access to base block methods
-    py::module::import("gnuradio.runtime");
+    py::module::import("gnuradio.gr");
 
     /**************************************/
     // The following comment block is used for
