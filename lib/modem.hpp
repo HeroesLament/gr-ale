@@ -1,9 +1,44 @@
 // modem.hpp
 
 #ifndef MODEM_HPP
+
 #define MODEM_HPP
+#define SAMPLE_BUFFER_SIZE 4096
+#define FFT_SIZE 2048
 
 class Modem {
+    public:
+        enum class PREAMBLE_TYPE {
+            DATA, THRU, TO, TWS, FROM, TIS, CMD, REP, NONE
+        };
+
+        enum class MODEM_STATE {
+            IDLE,
+            SCANNING,
+            SOUNDING,
+            EXCHANGE,
+            LINKING,
+            LINKED,
+            RECEIVING_PREAMBLE,
+            RECEIVING_DATA,
+            SENDING_PREAMBLE,
+            SENDING_DATA
+        };
+
+        enum class MODEM_RETURNS {
+            SUCCESS = 0,
+            INVALID_LENGTH = -1,
+            NULL_POINTER = -2,
+            SAMPLE_GATHER_FAILURE = -3,
+            CARRIER_TONE_DETECTION_ERROR = -4,
+            SYNC_FAILURE = -5,
+            INVALID_SYMBOL = -6
+        };
+
+        struct SYNC_RESULTS {
+            MODEM_RETURNS resultCode;
+            PREAMBLE_TYPE preambleType;
+        };
     private:
         float sampleBuffer[SAMPLE_BUFFER_SIZE];
         int ito2, itws2, ifrom2, itis2, irep2, idata2;
@@ -32,8 +67,10 @@ class Modem {
         SYNC_RESULTS synchronize(float* sample, int length);
         // PREAMBLE_TYPE decode(int symbol);
         // int encode(PREAMBLE_TYPE preamble);
-        unsigned long encode(unsigned int data);
-        unsigned int decode(unsigned long code, int &errors);
+        unsigned long golay_encode(unsigned int data);
+        unsigned int golay_decode(unsigned long code, int &errors);
+        unsigned long modem_de_interleave_and_fec(int *input, int *errors);
+        void modem_new_symbol(int sym, int nr);
 };
 
 #endif // MODEM_HPP

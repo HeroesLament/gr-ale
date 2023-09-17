@@ -5,8 +5,6 @@ namespace ale {
     namespace modem {
 
         const int MAX_ALLOWED_BUFFER_SIZE = 5120;
-        const int SAMPLE_BUFFER_SIZE = 4096;
-        const int FFT_SIZE = 1024;
         const float SAMPLING_RATE = 48000.0; // This is just an example value (48 kHz). Adjust to your actual sampling rate.
         const float BASE_FREQUENCY = 1000.0; // Example value. Adjust to your actual base frequency.
 
@@ -18,39 +16,7 @@ namespace ale {
         };
         const int NUM_PREAMBLES = sizeof(PREAMBLE_TYPES) / sizeof(PREAMBLE_TYPES[0]);
 
-        enum class PREAMBLE_TYPE {
-            DATA, THRU, TO, TWS, FROM, TIS, CMD, REP, NONE
-        };
-
-        enum class MODEM_STATE {
-            IDLE,
-            SCANNING,
-            SOUNDING,
-            EXCHANGE,
-            LINKING,
-            LINKED,
-            RECEIVING_PREAMBLE,
-            RECEIVING_DATA,
-            SENDING_PREAMBLE,
-            SENDING_DATA
-        };
-
-        enum class MODEM_RETURNS {
-            SUCCESS = 0,
-            INVALID_LENGTH = -1,
-            NULL_POINTER = -2,
-            SAMPLE_GATHER_FAILURE = -3,
-            CARRIER_TONE_DETECTION_ERROR = -4,
-            SYNC_FAILURE = -5,
-            INVALID_SYMBOL = -6
-        };
-
-        struct SYNC_RESULTS {
-            MODEM_RETURNS resultCode;
-            PREAMBLE_TYPE preambleType;
-        };
-
-        const unsigned int Modem::encode_table[]={
+        const unsigned int Modem::encode_table[] = {
             0x000,0x5C7,0xB8D,0xE4A,0x2DE,0x719,0x953,0xC94,0x5BC,0x07B,0xE31,0xBF6,0x762,0x2A5,0xCEF,0x928,0xB78,0xEBF,0x0F5,0x532,0x9A6,0xC61,0x22B,0x7EC,0xEC4,0xB03,0x549,0x08E,0xC1A,0x9DD,0x797,0x250,
             0x337,0x6F0,0x8BA,0xD7D,0x1E9,0x42E,0xA64,0xFA3,0x68B,0x34C,0xD06,0x8C1,0x455,0x192,0xFD8,0xA1F,0x84F,0xD88,0x3C2,0x605,0xA91,0xF56,0x11C,0x4DB,0xDF3,0x834,0x67E,0x3B9,0xF2D,0xAEA,0x4A0,0x167,
             0x66D,0x3AA,0xDE0,0x827,0x4B3,0x174,0xF3E,0xAF9,0x3D1,0x616,0x85C,0xD9B,0x10F,0x4C8,0xA82,0xF45,0xD15,0x8D2,0x698,0x35F,0xFCB,0xA0C,0x446,0x181,0x8A9,0xD6E,0x324,0x6E3,0xA77,0xFB0,0x1FA,0x43D,
@@ -181,7 +147,7 @@ namespace ale {
             0xDAF,0x868,0x622,0x3E5,0xF71,0xAB6,0x4FC,0x13B,0x813,0xDD4,0x39E,0x659,0xACD,0xF0A,0x140,0x487,0x6D7,0x310,0xD5A,0x89D,0x409,0x1CE,0xF84,0xA43,0x36B,0x6AC,0x8E6,0xD21,0x1B5,0x472,0xA38,0xFFF
         };
 
-        const unsigned int Modem::error_table[]={
+        const unsigned int Modem::error_table[] = {
             0x0000,0x1000,0x1000,0x2000,0x1000,0x2000,0x2000,0x3000,0x1000,0x2000,0x2000,0x3000,0x2000,0x3000,0x3000,0x4000,0x1000,0x2000,0x2000,0x3000,0x2000,0x3000,0x3000,0x4000,0x2000,0x3000,0x3000,0x4000,0x3000,0x4000,0x4000,0x3402,
             0x1000,0x2000,0x2000,0x3000,0x2000,0x3000,0x3000,0x4000,0x2000,0x3000,0x3000,0x4000,0x3000,0x4000,0x4000,0x3180,0x2000,0x3000,0x3000,0x4000,0x3000,0x4000,0x4000,0x3020,0x3000,0x4000,0x4000,0x3009,0x4000,0x3804,0x3250,0x4009,
             0x1000,0x2000,0x2000,0x3000,0x2000,0x3000,0x3000,0x4000,0x2000,0x3000,0x3000,0x4000,0x3000,0x4000,0x4000,0x3030,0x2000,0x3000,0x3000,0x4000,0x3000,0x4000,0x4000,0x38c0,0x3000,0x4000,0x4000,0x3009,0x4000,0x3300,0x3004,0x4004,
@@ -530,30 +496,38 @@ namespace ale {
 //             }
 //         }
 
-        unsigned int Modem::decode(unsigned long code, int &errors) {
+        unsigned long Modem::golay_encode(unsigned int data) {
+            unsigned long code = data;
+            code <<= 12;
+            code += Modem::encode_table[data];
+            return code;
+        }
+
+
+        unsigned int Modem::golay_decode(unsigned long code, int &errors) {
             unsigned int syndrome;
             unsigned int data;
             unsigned int parity;
-        
+
             data   = code >> 12;
             parity = code & 0x00000FFFL;
-        
+
             syndrome = parity ^ Modem::encode_table[data];
-        
+
             data    = data ^ (Modem::error_table[syndrome] & 0x0FFF);
             errors  = (Modem::error_table[syndrome] & 0xF000) >> 12;
-        
+
             return data;
         }
 
-        int Modem::encode(PREAMBLE_TYPE preamble) {
-            switch (preamble) {
-                case PREAMBLE_TYPE::TO:    return ito2;
-                case PREAMBLE_TYPE::TWS:   return itws2;
-                case PREAMBLE_TYPE::FROM:  return ifrom2;
-                default:                   return -1; // Indicates error or unknown preamble
-            }
-        }
+//        int Modem::encode(PREAMBLE_TYPE preamble) {
+//            switch (preamble) {
+//                case PREAMBLE_TYPE::TO:    return ito2;
+//                case PREAMBLE_TYPE::TWS:   return itws2;
+//                case PREAMBLE_TYPE::FROM:  return ifrom2;
+//                default:                   return -1; // Indicates error or unknown preamble
+//            }
+//        }
 
         void transitionTo(MODEM_STATE newState) {
             // Need to initialize previousState during object constructor
@@ -573,5 +547,70 @@ namespace ale {
                 // ... other states
             }
         }
+
+        unsigned long Modem::modem_de_interleave_and_fec(int *input, int *errors) {
+            const int VOTE_BUFFER_LENGTH = 48;
+
+            unsigned long worda = 0;
+            unsigned long wordb = 0;
+            unsigned int error_a = 0, error_b = 0;
+
+            for(int i = 0; i < VOTE_BUFFER_LENGTH; ) {
+                worda = input[i++] ? (worda << 1) + 1 : worda << 1;
+                wordb = input[i++] ? (wordb << 1) + 1 : wordb << 1;
+            }
+            wordb = wordb ^ 0x000FFF;
+            worda = golay_decode(worda, &error_a);
+            wordb = golay_decode(wordb, &error_b);
+
+            *errors = (error_a > error_b) ? error_a : error_b;
+
+            return (worda << 12) + wordb;
+        }
+
+        void Modem::modem_new_symbol(int sym, int nr) {
+            int majority_vote_array[VOTE_BUFFER_LENGTH];
+            int bad_votes = 0, sum, errors, i;
+            unsigned long word = 0;
+
+            inew = nr;
+
+            bits[nr][input_buffer_pos[nr]] = (sym & 4) ? 1 : 0;
+            input_buffer_pos[nr] = (input_buffer_pos[nr] + 1) % VOTE_ARRAY_LENGTH;
+            bits[nr][input_buffer_pos[nr]] = (sym & 2) ? 1 : 0;
+            input_buffer_pos[nr] = (input_buffer_pos[nr] + 1) % VOTE_ARRAY_LENGTH;
+            bits[nr][input_buffer_pos[nr]] = (sym & 1) ? 1 : 0;
+            input_buffer_pos[nr] = (input_buffer_pos[nr] + 1) % VOTE_ARRAY_LENGTH;
+
+            for(i = 0; i < VOTE_BUFFER_LENGTH; i++) {
+                sum  = bits[nr][(i + input_buffer_pos[nr]) % VOTE_ARRAY_LENGTH];
+                sum += bits[nr][(i + input_buffer_pos[nr] + SYMBOLS_PER_WORD) % VOTE_ARRAY_LENGTH];
+                sum += bits[nr][(i + input_buffer_pos[nr] + (2 * SYMBOLS_PER_WORD)) % VOTE_ARRAY_LENGTH];
+
+                if((sum == 1) || (sum == 2)) bad_votes++;
+
+                majority_vote_array[i] = vote_lookup[sum];
+            }
+
+            ber[nr] = 26;
+
+            if(word_sync[nr] == NOT_WORD_SYNC) {
+                if(bad_votes <= BAD_VOTE_THRESHOLD) {
+                    word = modem_de_interleave_and_fec(majority_vote_array, &errors);
+                    if(errors <= SYNC_ERROR_THRESHOLD) {
+                        word_sync[nr] = WORD_SYNC;
+                        word_sync_position[nr] = input_buffer_pos[nr]; 
+                    }
+                }
+            } else {
+                if(input_buffer_pos[nr] == word_sync_position[nr]) {
+                    word = modem_de_interleave_and_fec(majority_vote_array, &errors);
+                    decode_word(word, nr, bad_votes);
+                } else {
+                    word_sync[nr] = NOT_WORD_SYNC;
+                }
+            }
+        }
+
     }
 }
