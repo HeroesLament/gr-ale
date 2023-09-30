@@ -1,5 +1,5 @@
 #include <complex>
-#include "modem.hpp"
+#include "modem_impl.hpp"
 
 namespace ale {
     namespace modem {
@@ -278,8 +278,8 @@ namespace ale {
             0x3042,0x4042,0x400c,0x3800,0x4018,0x3204,0x30a0,0x4001,0x4010,0x3409,0x30a0,0x4054,0x30a0,0x4002,0x20a0,0x30a0,0x4010,0x3204,0x3400,0x4038,0x3204,0x2204,0x400b,0x3204,0x3010,0x4010,0x4010,0x3102,0x4008,0x3204,0x30a0,0x4011
         };
 
-        Modem() {
-            Modem::resetHistory();
+        Modem::Modem() {
+            resetHistory();
             fft_history_offset = 0;
             ito2 = 0;
             itws2 = 0;
@@ -287,7 +287,7 @@ namespace ale {
             itis2 = 0;
             irep2 = 0;
             idata2 = 0;
-            Modem::computeTwiddles();
+            computeTwiddles();
         }
 
         void Modem::resetHistory() {
@@ -296,7 +296,7 @@ namespace ale {
             }
         }
 
-        MODEM_RETURNS Modem::gatherSample(float *sampleBuffer, int bufferSize) {
+        ale::modem::Modem::MODEM_RETURNS Modem::gatherSample(float *sampleBuffer, int bufferSize) {
             // Check for potential error conditions
              if (!sampleBuffer) {
                 return MODEM_RETURNS::NULL_POINTER;
@@ -310,7 +310,7 @@ namespace ale {
             // For demonstration purposes, let's say there's a function:
             // bool internalGather(float *buffer, int size) that returns true on success, false on failure.
     
-            if (!internalGather(sampleBuffer, bufferSize)) {
+            if (!ale::modem::Modem::internalGather(sampleBuffer, bufferSize)) {
                 return MODEM_RETURNS::SAMPLE_GATHER_FAILURE;
             }
 
@@ -327,7 +327,7 @@ namespace ale {
             }
         }
 
-        MODEM_RETURNS Modem::processFFT(float *sample, int length) {
+        ale::modem::Modem::MODEM_RETURNS ale::modem::Modem::processFFT(float *sample, int length) {
             if (!sample) {
                 return MODEM_RETURNS::NULL_POINTER;
             }
@@ -356,13 +356,13 @@ namespace ale {
             return MODEM_RETURNS::SUCCESS;
         }
 
-        MODEM_RETURNS Modem::detectCarrierTone(float *sample, int length) {
+        ale::modem::Modem::MODEM_RETURNS Modem::detectCarrierTone(float *sample, int length) {
             // Placeholder logic: this is a very rudimentary way to detect the carrier tone, 
             // based on an assumption that a carrier tone might exhibit some characteristic, 
             // like a higher magnitude in a specific frequency bin.
             // You might want to replace this with an actual algorithm that's suitable for your needs.
 
-            processFFT(sample, length);  // First, we'll want to process the sample with FFT
+            ale::modem::Modem::processFFT(sample, length);  // First, we'll want to process the sample with FFT
     
             // For the sake of this example, let's assume that the carrier tone 
             // always resides in a specific frequency bin (e.g., bin number 10)
@@ -378,7 +378,7 @@ namespace ale {
         }
 
 
-        SYNC_RESULTS Modem::synchronize(float* sample, int length) {
+        ale::modem::Modem::SYNC_RESULTS ale::modem::Modem::synchronize(float* sample, int length) {
             SYNC_RESULTS result;
             if (!sample) {
                 result.resultCode = MODEM_RETURNS::NULL_POINTER;
@@ -415,7 +415,7 @@ namespace ale {
             return result;
         }
 
-        MODEM_RETURNS Modem::modulateMFSK(int symbol, float* outputBuffer, int bufferSize) {
+        ale::modem::Modem::MODEM_RETURNS Modem::modulateMFSK(int symbol, float* outputBuffer, int bufferSize) {
             if (symbol < 0 || symbol >= 8) { // Checking if symbol is between 0 and 7
                 return MODEM_RETURNS::INVALID_SYMBOL;
             }
@@ -443,7 +443,7 @@ namespace ale {
             return MODEM_RETURNS::SUCCESS;
         }
 
-        MODEM_RETURNS Modem::demodulateMFSK(float *sampleBuffer, int bufferSize, int *outputSymbols, int &numSymbols) {
+        ale::modem::Modem::MODEM_RETURNS Modem::demodulateMFSK(float *sampleBuffer, int bufferSize, int *outputSymbols, int &numSymbols) {
             if (!sampleBuffer || !outputSymbols) {
                 return MODEM_RETURNS::NULL_POINTER;
             }
@@ -458,7 +458,7 @@ namespace ale {
             for (int i = 0; i < numSymbols; i++) {
                 float *currentTone = &sampleBuffer[i * toneSamples];
 
-                processFFT(currentTone, toneSamples);  // We assume this function updates the fft_mag array
+                ale::modem::Modem::processFFT(currentTone, toneSamples);  // We assume this function updates the fft_mag array
 
                 int maxBin = 0;
                 for (int j = 1; j < FFT_SIZE / 2; j++) {  // We only need to inspect half the spectrum for real-valued signals
@@ -482,7 +482,7 @@ namespace ale {
         }
 
 
-        bool Modem::internalGather(float *buffer, int size) {
+        bool ale::modem::Modem::internalGather(float *buffer, int size) {
             // Placeholder logic
             return true; // This is just a placeholder. You need to implement the actual logic.
         }
@@ -496,15 +496,15 @@ namespace ale {
 //             }
 //         }
 
-        unsigned long Modem::golay_encode(unsigned int data) {
-            unsigned long code = data;
+        unsigned int Modem::golay_encode(unsigned int data) {
+            unsigned int code = data;
             code <<= 12;
             code += Modem::encode_table[data];
             return code;
         }
 
 
-        unsigned int Modem::golay_decode(unsigned long code, int &errors) {
+        unsigned int Modem::golay_decode(unsigned int code, unsigned int errors) {
             unsigned int syndrome;
             unsigned int data;
             unsigned int parity;
@@ -529,30 +529,28 @@ namespace ale {
 //            }
 //        }
 
-        void transitionTo(MODEM_STATE newState) {
+        void ale::modem::Modem::transitionTo(MODEM_STATE newState) {
             // Need to initialize previousState during object constructor
             previousState = currentState;
             currentState = newState;
             // Any other logic you need during transition
         }
 
-        void processData(float* data, int size) {
+        void ale::modem::Modem::processData(float* data, int size) {
             switch(currentState) {
-                case MODEM_STATE::IDLE:
+                case ale::modem::Modem::MODEM_STATE::IDLE:
                     // ...
                     break;
-                case MODEM_STATE::RECEIVING_PREAMBLE:
+                case ale::modem::Modem::MODEM_STATE::RECEIVING_PREAMBLE:
                     // ...
                     break;
                 // ... other states
             }
         }
 
-        unsigned long Modem::modem_de_interleave_and_fec(int *input, int *errors) {
-            const int VOTE_BUFFER_LENGTH = 48;
-
-            unsigned long worda = 0;
-            unsigned long wordb = 0;
+        unsigned int Modem::modem_de_interleave_and_fec(int *input, int *errors) {
+            unsigned int worda = 0;
+            unsigned int wordb = 0;
             unsigned int error_a = 0, error_b = 0;
 
             for(int i = 0; i < VOTE_BUFFER_LENGTH; ) {
@@ -560,8 +558,8 @@ namespace ale {
                 wordb = input[i++] ? (wordb << 1) + 1 : wordb << 1;
             }
             wordb = wordb ^ 0x000FFF;
-            worda = golay_decode(worda, &error_a);
-            wordb = golay_decode(wordb, &error_b);
+            worda = golay_decode(worda, error_a);
+            wordb = golay_decode(wordb, error_b);
 
             *errors = (error_a > error_b) ? error_a : error_b;
 
@@ -571,7 +569,7 @@ namespace ale {
         void Modem::modem_new_symbol(int sym, int nr) {
             int majority_vote_array[VOTE_BUFFER_LENGTH];
             int bad_votes = 0, sum, errors, i;
-            unsigned long word = 0;
+            unsigned int word = 0;
 
             inew = nr;
 
@@ -610,6 +608,31 @@ namespace ale {
                     word_sync[nr] = NOT_WORD_SYNC;
                 }
             }
+        }
+
+        void Modem::modulateSymbolsToIQ() {
+            double buffer[some_size]; // Determine the appropriate size based on your needs
+            size_t buffer_index = 0;
+            
+            // Define the eight possible carrier frequencies for 8-FSK
+            double carrier_frequencies[8] = {freq0, freq1, freq2, freq3, freq4, freq5, freq6, freq7};
+            
+            for(size_t i = 0; i < symbol_stream.size() && buffer_index < some_size; ++i) {
+                // Look up the carrier frequency for the current symbol in the symbol stream
+                double carrier_freq = carrier_frequencies[symbol_stream[i]]; 
+            
+                for(size_t n = 0; n < samples_per_symbol && buffer_index < some_size; ++n) {
+                    double time = n / sample_rate;
+                    double i = cos(2.0 * M_PI * carrier_freq * time);
+                    double q = sin(2.0 * M_PI * carrier_freq * time);
+                    
+                    buffer[buffer_index++] = i;
+                    if (buffer_index < some_size) buffer[buffer_index++] = q;
+                }
+            }
+            
+            // Send buffer to DAC over I2C or SPI
+            
         }
 
     }

@@ -19,6 +19,12 @@ inputs:
 -   domain: stream
     dtype: float
 
+outputs:
+  - label: Data Port
+    domain: message
+    id: data_port
+    dtype: uint8
+
 templates:
     imports: import gnuradio.ale
     make: gnuradio.ale.decode_ff.make(${freq},${wdir},${wsec})

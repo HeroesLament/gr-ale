@@ -21,7 +21,7 @@
 #ifndef INCLUDED_ALE_DECODE_FF_IMPL_H
 #define INCLUDED_ALE_DECODE_FF_IMPL_H
 
-#include <gnuradio/ale/decode_ff.h>
+#include "../include/gnuradio/ale/decode_ff.h"
 
 #define NR                          17
 #define FFT_SIZE                    64
@@ -56,6 +56,10 @@ namespace gr {
     class decode_ff_impl : public decode_ff
     {
      private:
+     // Data port out
+        static const pmt::pmt_t data_port;
+        static const size_t EXPECTED_FRAME_LENGTH;
+
       // Nothing to declare in this block.
         double  fft_cs_twiddle[FFT_SIZE];
         double  fft_ss_twiddle[FFT_SIZE];

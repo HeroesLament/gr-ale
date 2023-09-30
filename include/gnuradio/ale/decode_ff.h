@@ -35,6 +35,11 @@ namespace gr {
      */
     class ALE_API decode_ff : virtual public gr::block
     {
+     private:
+      static const pmt::pmt_t symbols_port;
+      static const pmt::pmt_t preambles_port;
+      static const pmt::pmt_t encoded_data_port;
+
      public:
       typedef std::shared_ptr<decode_ff> sptr;
 

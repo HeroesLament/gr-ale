@@ -16,30 +16,28 @@
 /* BINDTOOL_GEN_AUTOMATIC(0) */
 /* BINDTOOL_USE_PYGCCXML(0) */
 /* BINDTOOL_HEADER_FILE(decode_ff.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(7c7daf24d324314a6d1d90dc26428f8e) */
+/* BINDTOOL_HEADER_FILE_HASH(02d5bc32d9f98a39fb24f33930c3086f) */
 /***********************************************************************************/
 
-
-#include <gnuradio/block.h>
-#include <gnuradio/basic_block.h>
-#include <gnuradio/sync_block.h>
 #include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <iostream>
-
 
 namespace py = pybind11;
 
-#include "decode_ff_python.h"
 #include <gnuradio/ale/decode_ff.h>
-
 // pydoc.h is automatically generated in the build directory
 #include <decode_ff_pydoc.h>
 
 void bind_decode_ff(py::module &m) {
-    py::class_<gr::ale::decode_ff, gr::block, std::shared_ptr<gr::ale::decode_ff>>(m, "decode_ff")
-        .def_static("make", &gr::ale::decode_ff::make,
-            py::arg("freq"), py::arg("wdir"), py::arg("wsec"));
-}
 
+  using decode_ff = gr::ale::decode_ff;
+
+  py::class_<decode_ff, gr::block, gr::basic_block, std::shared_ptr<decode_ff>>(
+      m, "decode_ff", D(decode_ff))
+
+      .def(py::init(&decode_ff::make), py::arg("freq"), py::arg("*wdir"),
+           py::arg("wsec"), D(decode_ff, make))
+
+      ;
+}
