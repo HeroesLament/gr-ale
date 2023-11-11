@@ -9,8 +9,6 @@ namespace gr {
          *
          */
         class ALE_API modem : public gr::block
-        {
-
-        }
+        {};
     } // namespace ale
-} // namespace gr
+}; // namespace gr

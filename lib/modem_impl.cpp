@@ -1,8 +1,10 @@
+#include <bitset>
 #include <complex>
+#include <tuple>
 #include "modem_impl.hpp"
 
-namespace ale {
-    namespace modem {
+namespace gr {
+    namespace ale {
 
         const int MAX_ALLOWED_BUFFER_SIZE = 5120;
         const float SAMPLING_RATE = 48000.0; // This is just an example value (48 kHz). Adjust to your actual sampling rate.
@@ -296,7 +298,7 @@ namespace ale {
             }
         }
 
-        ale::modem::Modem::MODEM_RETURNS Modem::gatherSample(float *sampleBuffer, int bufferSize) {
+        gr::ale::Modem::MODEM_RETURNS Modem::gatherSample(float *sampleBuffer, int bufferSize) {
             // Check for potential error conditions
              if (!sampleBuffer) {
                 return MODEM_RETURNS::NULL_POINTER;
@@ -310,7 +312,7 @@ namespace ale {
             // For demonstration purposes, let's say there's a function:
             // bool internalGather(float *buffer, int size) that returns true on success, false on failure.
     
-            if (!ale::modem::Modem::internalGather(sampleBuffer, bufferSize)) {
+            if (!gr::ale::Modem::internalGather(sampleBuffer, bufferSize)) {
                 return MODEM_RETURNS::SAMPLE_GATHER_FAILURE;
             }
 
@@ -327,7 +329,7 @@ namespace ale {
             }
         }
 
-        ale::modem::Modem::MODEM_RETURNS ale::modem::Modem::processFFT(float *sample, int length) {
+        gr::ale::Modem::MODEM_RETURNS gr::ale::Modem::processFFT(float *sample, int length) {
             if (!sample) {
                 return MODEM_RETURNS::NULL_POINTER;
             }
@@ -356,13 +358,13 @@ namespace ale {
             return MODEM_RETURNS::SUCCESS;
         }
 
-        ale::modem::Modem::MODEM_RETURNS Modem::detectCarrierTone(float *sample, int length) {
+        gr::ale::Modem::MODEM_RETURNS Modem::detectCarrierTone(float *sample, int length) {
             // Placeholder logic: this is a very rudimentary way to detect the carrier tone, 
             // based on an assumption that a carrier tone might exhibit some characteristic, 
             // like a higher magnitude in a specific frequency bin.
             // You might want to replace this with an actual algorithm that's suitable for your needs.
 
-            ale::modem::Modem::processFFT(sample, length);  // First, we'll want to process the sample with FFT
+            gr::ale::Modem::processFFT(sample, length);  // First, we'll want to process the sample with FFT
     
             // For the sake of this example, let's assume that the carrier tone 
             // always resides in a specific frequency bin (e.g., bin number 10)
@@ -378,7 +380,7 @@ namespace ale {
         }
 
 
-        ale::modem::Modem::SYNC_RESULTS ale::modem::Modem::synchronize(float* sample, int length) {
+        gr::ale::Modem::SYNC_RESULTS gr::ale::Modem::synchronize(float* sample, int length) {
             SYNC_RESULTS result;
             if (!sample) {
                 result.resultCode = MODEM_RETURNS::NULL_POINTER;
@@ -415,7 +417,7 @@ namespace ale {
             return result;
         }
 
-        ale::modem::Modem::MODEM_RETURNS Modem::modulateMFSK(int symbol, float* outputBuffer, int bufferSize) {
+        gr::ale::Modem::MODEM_RETURNS Modem::modulateMFSK(int symbol, float* outputBuffer, int bufferSize) {
             if (symbol < 0 || symbol >= 8) { // Checking if symbol is between 0 and 7
                 return MODEM_RETURNS::INVALID_SYMBOL;
             }
@@ -443,7 +445,7 @@ namespace ale {
             return MODEM_RETURNS::SUCCESS;
         }
 
-        ale::modem::Modem::MODEM_RETURNS Modem::demodulateMFSK(float *sampleBuffer, int bufferSize, int *outputSymbols, int &numSymbols) {
+        gr::ale::Modem::MODEM_RETURNS Modem::demodulateMFSK(float *sampleBuffer, int bufferSize, int *outputSymbols, int &numSymbols) {
             if (!sampleBuffer || !outputSymbols) {
                 return MODEM_RETURNS::NULL_POINTER;
             }
@@ -458,7 +460,7 @@ namespace ale {
             for (int i = 0; i < numSymbols; i++) {
                 float *currentTone = &sampleBuffer[i * toneSamples];
 
-                ale::modem::Modem::processFFT(currentTone, toneSamples);  // We assume this function updates the fft_mag array
+                gr::ale::Modem::processFFT(currentTone, toneSamples);  // We assume this function updates the fft_mag array
 
                 int maxBin = 0;
                 for (int j = 1; j < FFT_SIZE / 2; j++) {  // We only need to inspect half the spectrum for real-valued signals
@@ -482,7 +484,7 @@ namespace ale {
         }
 
 
-        bool ale::modem::Modem::internalGather(float *buffer, int size) {
+        bool gr::ale::Modem::internalGather(float *buffer, int size) {
             // Placeholder logic
             return true; // This is just a placeholder. You need to implement the actual logic.
         }
@@ -529,24 +531,70 @@ namespace ale {
 //            }
 //        }
 
-        void ale::modem::Modem::transitionTo(MODEM_STATE newState) {
+        void gr::ale::Modem::transitionTo(MODEM_STATE newState) {
             // Need to initialize previousState during object constructor
             previousState = currentState;
             currentState = newState;
             // Any other logic you need during transition
         }
 
-        void ale::modem::Modem::processData(float* data, int size) {
-            switch(currentState) {
-                case ale::modem::Modem::MODEM_STATE::IDLE:
-                    // ...
-                    break;
-                case ale::modem::Modem::MODEM_STATE::RECEIVING_PREAMBLE:
-                    // ...
-                    break;
-                // ... other states
-            }
-        }
+void gr::ale::Modem::processData(float* data, int size) {
+    switch(currentState) {
+        case MODEM_STATE::IDLE:
+            // Handle IDLE state
+            break;
+
+        case MODEM_STATE::SCANNING:
+            // Handle SCANNING state
+            // Typically involves scanning for signals or channels
+            break;
+
+        case MODEM_STATE::SOUNDING:
+            // Handle SOUNDING state
+            // This might involve sending out sounding signals and waiting for responses
+            break;
+
+        case MODEM_STATE::EXCHANGE:
+            // Handle EXCHANGE state
+            // Usually involves exchanging data or control messages with another station
+            break;
+
+        case MODEM_STATE::LINKING:
+            // Handle LINKING state
+            // Involves establishing a link with another station
+            break;
+
+        case MODEM_STATE::LINKED:
+            // Handle LINKED state
+            // The modem is linked with another station and can exchange data
+            break;
+
+        case MODEM_STATE::RECEIVING_PREAMBLE:
+            // Handle RECEIVING_PREAMBLE state
+            // Process incoming preamble and prepare for data reception
+            break;
+
+        case MODEM_STATE::RECEIVING_DATA:
+            // Handle RECEIVING_DATA state
+            // Process and decode the received data
+            break;
+
+        case MODEM_STATE::SENDING_PREAMBLE:
+            // Handle SENDING_PREAMBLE state
+            // Generate and send preamble signal
+            break;
+
+        case MODEM_STATE::SENDING_DATA:
+            // Handle SENDING_DATA state
+            // Encode and send data
+            break;
+
+        default:
+            // Optionally handle any unexpected states
+            // Consider logging this as an error or warning
+            break;
+    }
+}
 
         unsigned int Modem::modem_de_interleave_and_fec(int *input, int *errors) {
             unsigned int worda = 0;
@@ -610,30 +658,99 @@ namespace ale {
             }
         }
 
-        void Modem::modulateSymbolsToIQ() {
-            double buffer[some_size]; // Determine the appropriate size based on your needs
-            size_t buffer_index = 0;
-            
-            // Define the eight possible carrier frequencies for 8-FSK
-            double carrier_frequencies[8] = {freq0, freq1, freq2, freq3, freq4, freq5, freq6, freq7};
-            
-            for(size_t i = 0; i < symbol_stream.size() && buffer_index < some_size; ++i) {
-                // Look up the carrier frequency for the current symbol in the symbol stream
-                double carrier_freq = carrier_frequencies[symbol_stream[i]]; 
-            
-                for(size_t n = 0; n < samples_per_symbol && buffer_index < some_size; ++n) {
-                    double time = n / sample_rate;
-                    double i = cos(2.0 * M_PI * carrier_freq * time);
-                    double q = sin(2.0 * M_PI * carrier_freq * time);
-                    
-                    buffer[buffer_index++] = i;
-                    if (buffer_index < some_size) buffer[buffer_index++] = q;
-                }
+//        void Modem::modulateSymbolsToIQ() {
+//            double buffer[some_size]; // Determine the appropriate size based on your needs
+//            size_t buffer_index = 0;
+//
+//            // Define the eight possible carrier frequencies for 8-FSK
+//            double carrier_frequencies[8] = {freq0, freq1, freq2, freq3, freq4, freq5, freq6, freq7};
+//
+//            for(size_t i = 0; i < symbol_stream.size() && buffer_index < some_size; ++i) {
+//                // Look up the carrier frequency for the current symbol in the symbol stream
+//                double carrier_freq = carrier_frequencies[symbol_stream[i]]; 
+//
+//                for(size_t n = 0; n < samples_per_symbol && buffer_index < some_size; ++n) {
+//                    double time = n / sample_rate;
+//                    double i = cos(2.0 * M_PI * carrier_freq * time);
+//                    double q = sin(2.0 * M_PI * carrier_freq * time);
+//
+//                    buffer[buffer_index++] = i;
+//                    if (buffer_index < some_size) buffer[buffer_index++] = q;
+//                }
+//            }
+//        }
+
+        void gr::ale::Modem::handle_msg_in(pmt::pmt_t msg) {
+            // Check if the PMT is a pair (key-value format)
+            if(pmt::is_pair(msg)) {
+                // Extract the key and value
+                pmt::pmt_t key = pmt::car(msg);
+                pmt::pmt_t value = pmt::cdr(msg);
+        
+                // Process the message based on key and value
+                // ...
+        
+                // Construct a response message
+                pmt::pmt_t response = pmt::string_to_symbol("response message");
+        
+                // Send the response message
+                message_port_pub(pmt::mp("msg_out"), response);
             }
-            
-            // Send buffer to DAC over I2C or SPI
-            
+            else {
+                // Handle non-pair PMT or other types of messages
+            }
         }
 
+        int Modem::general_work(int noutput_items,
+                                gr_vector_int &ninput_items, 
+                                gr_vector_const_void_star &input_items, 
+                                gr_vector_void_star &output_items) {
+            const float *in = (const float *) input_items[0];
+            float *out = (float *) output_items[0];
+            unsigned ninputs = ninput_items[0];
+
+            int items_processed = 0;
+            int output_index = 0;
+
+            while (items_processed < ninputs && (output_index + toneSamples) <= noutput_items) {
+                int symbol = static_cast<int>(in[items_processed]); // Assuming the input stream is symbols
+                if (modulateMFSK(symbol, &out[output_index], toneSamples) != MODEM_RETURNS::SUCCESS) {
+                    // Handle modulation error
+                    break;
+                }
+                output_index += toneSamples;
+                items_processed++;
+            }
+
+            consume_each(items_processed); // Tell runtime system how many input items we consumed
+            return output_index; // Tell runtime system how many output items we produced
+        }
+
+        void Modem::encrypt(){
+            bool ph01 = true;
+        };
+
+        void Modem::decrypt(){
+            bool ph02 = false;
+        };
+
+        unsigned int Modem::interleave(unsigned int golayCoderA, unsigned int golayCoderB){
+            unsigned int interleavedWord = 0;
+            for(int i = 0; i < 24; i++) {
+                interleavedWord |= ((golayCoderA >> i) & 1) << (2*i);
+                interleavedWord |= ((golayCoderB >> i) & 1) << (2*i + 1);
+            }
+            return interleavedWord;
+        }
+
+        std::tuple<unsigned int, unsigned int> Modem::deinterleave(unsigned int interleavedWord) {
+            unsigned int golayCoderA = 0;
+            unsigned int golayCoderB = 0;
+            for(int i = 0; i < 24; i++) {
+                golayCoderA |= ((interleavedWord >> (2*i)) & 1) << i;
+                golayCoderB |= ((interleavedWord >> (2*i + 1)) & 1) << i;
+            }
+            return std::make_tuple(golayCoderA, golayCoderB);
+        }
     }
 }
