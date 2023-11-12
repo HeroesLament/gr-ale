@@ -1,2 +1,4 @@
 /build/
 *.pyc
+/lib/xmlrpc-c/.svn/
+/modem_engine_diagram.png

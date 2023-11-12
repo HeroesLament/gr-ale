@@ -1,0 +1,26 @@
+digraph modem_engine {
+    rankdir=TB;
+    node [shape=box];
+
+    Init [label="Initialize State and Variables"];
+    CheckCmd [label="Check for Incoming Commands"];
+    ProcessCmd [label="Process Incoming Commands and Internal Logic"];
+    SampleInput [label="Sample Audio/Float Input"];
+    ProcessSamples [label="Discriminate and Process Received Samples"];
+    ErrorCheck [label="De-interleave and Error Check"];
+    HandleData [label="Handle Received ALE Words"];
+    PrepareData [label="Prepare Data for Transmission"];
+    Modulate [label="Modulate and Output Data"];
+    ManageBuffers [label="Manage Buffers and State"];
+
+    Init -> CheckCmd;
+    CheckCmd -> ProcessCmd;
+    ProcessCmd -> SampleInput;
+    SampleInput -> ProcessSamples;
+    ProcessSamples -> ErrorCheck;
+    ErrorCheck -> HandleData;
+    HandleData -> PrepareData;
+    PrepareData -> Modulate;
+    Modulate -> ManageBuffers;
+    ManageBuffers -> Init [label="loop back", color="blue"];
+}

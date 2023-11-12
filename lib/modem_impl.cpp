@@ -686,13 +686,13 @@ void gr::ale::Modem::processData(float* data, int size) {
                 // Extract the key and value
                 pmt::pmt_t key = pmt::car(msg);
                 pmt::pmt_t value = pmt::cdr(msg);
-        
+
                 // Process the message based on key and value
                 // ...
-        
+
                 // Construct a response message
                 pmt::pmt_t response = pmt::string_to_symbol("response message");
-        
+
                 // Send the response message
                 message_port_pub(pmt::mp("msg_out"), response);
             }
@@ -705,6 +705,23 @@ void gr::ale::Modem::processData(float* data, int size) {
                                 gr_vector_int &ninput_items, 
                                 gr_vector_const_void_star &input_items, 
                                 gr_vector_void_star &output_items) {
+
+            //VARIABLE AND STATE MANAGEMENT BEGINS
+            // Reset or update internal state variables
+            currentSamplePosition = 0; // Reset the current position in the sample buffer
+            fft_history_offset = 0;    // Reset FFT history offset
+
+            // Reset or initialize other internal buffers and variables
+            memset(sampleBuffer, 0, sizeof(sampleBuffer)); // Clear the sample buffer
+            memset(fft_out, 0, sizeof(fft_out));           // Clear the FFT output array
+            memset(fft_history, 0, sizeof(fft_history));   // Clear the FFT history
+            memset(fft_mag, 0, sizeof(fft_mag));           // Clear the FFT magnitude array
+
+            // Initialize or reset state-specific variables
+            currentState = MODEM_STATE::IDLE; // Set initial state
+            previousState = MODEM_STATE::IDLE; // Set initial previous state
+            //VARIABLE AND STATE MANAGEMENT ENDS
+
             const float *in = (const float *) input_items[0];
             float *out = (float *) output_items[0];
             unsigned ninputs = ninput_items[0];
