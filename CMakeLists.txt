@@ -61,6 +61,8 @@ include(GrVersion)
 
 include(GrPlatform) #define LIB_SUFFIX
 
+include(ExternalProject)
+
 if(NOT CMAKE_MODULES_DIR)
   set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
 endif(NOT CMAKE_MODULES_DIR)
@@ -72,51 +74,21 @@ set(GR_PKG_DOC_DIR      ${GR_DOC_DIR}/${CMAKE_PROJECT_NAME})
 set(GR_PKG_CONF_DIR     ${GR_CONF_DIR}/${CMAKE_PROJECT_NAME}/conf.d)
 set(GR_PKG_LIBEXEC_DIR  ${GR_LIBEXEC_DIR}/${CMAKE_PROJECT_NAME})
 
-########################################################################
-# On Apple only, set install name and use rpath correctly, if not already set
-########################################################################
-if(APPLE)
-    if(NOT CMAKE_INSTALL_NAME_DIR)
-        set(CMAKE_INSTALL_NAME_DIR
-            ${CMAKE_INSTALL_PREFIX}/${GR_LIBRARY_DIR} CACHE
-            PATH "Library Install Name Destination Directory" FORCE)
-    endif(NOT CMAKE_INSTALL_NAME_DIR)
-    if(NOT CMAKE_INSTALL_RPATH)
-        set(CMAKE_INSTALL_RPATH
-            ${CMAKE_INSTALL_PREFIX}/${GR_LIBRARY_DIR} CACHE
-            PATH "Library Install RPath" FORCE)
-    endif(NOT CMAKE_INSTALL_RPATH)
-    if(NOT CMAKE_BUILD_WITH_INSTALL_RPATH)
-        set(CMAKE_BUILD_WITH_INSTALL_RPATH ON CACHE
-            BOOL "Do Build Using Library Install RPath" FORCE)
-    endif(NOT CMAKE_BUILD_WITH_INSTALL_RPATH)
-endif(APPLE)
+# Add xmlrpc-c as an external project
+ExternalProject_Add(xmlrpc-c
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/xmlrpc-c
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/xmlrpc-c"
+    CONFIGURE_COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/lib/xmlrpc-c/configure"
+    BUILD_COMMAND make
+    BUILD_IN_SOURCE 1
+    INSTALL_COMMAND ""
+)
 
-########################################################################
-# Find gnuradio build dependencies
-########################################################################
-find_package(Doxygen)
-
-########################################################################
-# Setup doxygen option
-########################################################################
-if(DOXYGEN_FOUND)
-    option(ENABLE_DOXYGEN "Build docs using Doxygen" ON)
-else(DOXYGEN_FOUND)
-    option(ENABLE_DOXYGEN "Build docs using Doxygen" OFF)
-endif(DOXYGEN_FOUND)
-
-########################################################################
-# Create uninstall target
-########################################################################
-configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-@ONLY)
-
-add_custom_target(uninstall
-    ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-    )
+# Add a custom target for xmlrpc-c
+add_custom_target(
+    xmlrpc-c-target
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/xmlrpc-c/src/xmlrpc-c-stamp/xmlrpc-c-build
+)
 
 ########################################################################
 # Add subdirectories

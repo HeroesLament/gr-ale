@@ -38,6 +38,15 @@ if(APPLE)
     )
 endif(APPLE)
 
+# Add the custom target as a dependency
+add_dependencies(gnuradio-ale xmlrpc-c-target)
+
+# Include directories for xmlrpc-c
+target_include_directories(gnuradio-ale PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/xmlrpc-c/include)
+
+# Linking xmlrpc-c with gnuradio-ale
+target_link_libraries(gnuradio-ale "${CMAKE_SOURCE_DIR}/lib/xmlrpc-c/src/libxmlrpc.a")
+
 ########################################################################
 # Install built library files
 ########################################################################
